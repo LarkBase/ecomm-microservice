@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  createdBy String?
+  updatedBy String?
+
+  users       User[]
+  departments Department[]
+  roles       Role[]
+
+  @@index([id])
+}
+
+model User {
+  id        String     @id @default(uuid())
+  tenantId  String?
+  email     String     @unique
+  password  String
+  status    UserStatus @default(PENDING_VERIFICATION)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+
+  passwordResetToken String? @unique
+  verificationToken  String? @unique
+
+  sessions        Session[]
+  refreshTokens   RefreshToken[]
+  userRoles       UserRole[]
+  userPermissions UserPermission[]
+  department      Department?          @relation(fields: [departmentId], references: [id])
+  departmentId    String?
+  failedAttempts  FailedLoginAttempt[]
+  tenant          Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  auditLogs       AuditLog[]
+
+  @@index([email])
+}
+
+model Department {
+  id                 String    @id @default(uuid())
+  tenantId           String
+  name               String    @unique
+  description        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+  parentDepartmentId String?
+
+  createdBy String?
+  updatedBy String?
+
+  roles  DepartmentRole[]
+  users  User[]
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model DepartmentRole {
+  id           String @id @default(uuid())
+  departmentId String
+  roleId       String
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+}
+
+model Role {
+  id            String    @id @default(uuid())
+  tenantId      String
+  name          String    @unique
+  description   String?
+  systemDefined Boolean   @default(false)
+  parentRoleId  String?
+  parentRole    Role?     @relation("RoleToParent", fields: [parentRoleId], references: [id])
+  childRoles    Role[]    @relation("RoleToParent")
+  deletedAt     DateTime?
+  ownerId       String?
+
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissions     RolePermission[]
+  userRoles       UserRole[]
+  departmentRoles DepartmentRole[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  module      String
+
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+}
+
+model RolePermission {
+  id           String @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserRole {
+  id        String    @id @default(uuid())
+  userId    String
+  roleId    String
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model UserPermission {
+  id           String    @id @default(uuid())
+  userId       String
+  permissionId String?
+  expiresAt    DateTime?
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission? @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique
+  createdAt DateTime  @default(now())
+  expiresIn Int
+  revokedAt DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FailedLoginAttempt {
+  id           String   @id @default(uuid())
+  userId       String
+  ip           String
+  attemptCount Int      @default(1)
+  timestamp    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entityId  String
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Enum for Role Levels (Includes SUPER_ADMIN)
+enum RoleLevel {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
