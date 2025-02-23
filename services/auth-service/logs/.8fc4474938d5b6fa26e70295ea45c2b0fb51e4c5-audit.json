@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\LARK\\GITHUB\\BinaryBeasts\\ecomm-microservice\\services\\auth-service\\logs\\.8fc4474938d5b6fa26e70295ea45c2b0fb51e4c5-audit.json",
+    "files": [
+        {
+            "date": 1740253410459,
+            "name": "D:\\LARK\\GITHUB\\BinaryBeasts\\ecomm-microservice\\services\\auth-service\\logs\\error-2025-02-23.log",
+            "hash": "c297201f0471b8e771a40d40190952047cdcc62f25d4146a917e3fc36eba6a11"
+        }
+    ],
+    "hashType": "sha256"
+}

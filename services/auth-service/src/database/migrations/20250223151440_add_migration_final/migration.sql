@@ -23,6 +23,7 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "email" TEXT NOT NULL,
+    "namme" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "status" "UserStatus" NOT NULL DEFAULT 'PENDING_VERIFICATION',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -31,6 +32,7 @@ CREATE TABLE "User" (
     "createdBy" TEXT,
     "updatedBy" TEXT,
     "passwordResetToken" TEXT,
+    "passwordResetTokenExpiry" TIMESTAMP(3),
     "verificationToken" TEXT,
     "departmentId" TEXT,
 

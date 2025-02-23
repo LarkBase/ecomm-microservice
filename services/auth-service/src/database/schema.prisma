@@ -29,6 +29,7 @@ model User {
   id        String     @id @default(uuid())
   tenantId  String?
   email     String     @unique
+  name     String
   password  String
   status    UserStatus @default(PENDING_VERIFICATION)
   createdAt DateTime   @default(now())
@@ -39,6 +40,7 @@ model User {
   updatedBy String?
 
   passwordResetToken String? @unique
+  passwordResetTokenExpiry  DateTime?
   verificationToken  String? @unique
 
   sessions        Session[]

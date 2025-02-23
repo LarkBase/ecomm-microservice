@@ -2,10 +2,13 @@
   "name": "auth-service",
   "version": "1.0.0",
   "description": "auth service for ecom websitte",
-  "main": "main.js",
+  "main": "src/server.js",
   "scripts": {
     "test": "jest",
-    "seed": "node database/seed/index.mjs"
+    "seed": "node src/database/seed/index.mjs",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "lint": "eslint ."
   },
   "keywords": [
     "npm",
@@ -27,6 +30,7 @@
     "bcryptjs": "^3.0.2",
     "chalk": "^5.4.1",
     "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -35,13 +39,19 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.0.0",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "redis": "^4.7.0",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "winston": "^3.17.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "nodemon": "^3.1.9",
     "prisma": "^6.4.1"
   }
 }

@@ -1,15 +1,16 @@
-import 'dotenv/config'
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import chalk from 'chalk';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
 const users = [
-    { email: 'admin@vibe.com', password: 'Admin@123', role: 'SUPER_ADMIN' },
-    { email: 'support@vibe.com', password: 'Support@123', role: 'CUSTOMER_SUPPORT' },
-    { email: 'vendor@vibe.com', password: 'Vendor@123', role: 'VENDOR' },
-    { email: 'customer@vibe.com', password: 'Customer@123', role: 'CUSTOMER' },
+    { name: 'Admin User', email: 'admin@vibe.com', password: 'Admin@123', role: 'SUPER_ADMIN' },
+    { name: 'Support Team', email: 'support@vibe.com', password: 'Support@123', role: 'CUSTOMER_SUPPORT' },
+    { name: 'Vendor User', email: 'vendor@vibe.com', password: 'Vendor@123', role: 'VENDOR' },
+    { name: 'Customer User', email: 'customer@vibe.com', password: 'Customer@123', role: 'CUSTOMER' },
 ];
 
 async function seedUsers() {
@@ -23,11 +24,14 @@ async function seedUsers() {
 
             if (!existingUser) {
                 const hashedPassword = await bcrypt.hash(user.password, 10);
+                
                 const createdUser = await prisma.user.create({
                     data: {
+                        name: user.name, // ✅ Added Name
                         email: user.email,
                         password: hashedPassword,
                         tenantId: 'tenant-001',
+                        status: 'PENDING_VERIFICATION', // ✅ New users need email verification
                     },
                 });
 

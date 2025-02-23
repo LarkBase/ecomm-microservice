@@ -1,0 +1,190 @@
+openapi: "3.0.0"
+info:
+  title: "E-Commerce Auth API"
+  description: "Enterprise-grade authentication API"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:5001"
+    description: "Development Server"
+
+paths:
+  /api/auth/register:
+    post:
+      summary: "Register a new user"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                  description: "Must contain uppercase, number & special char"
+      responses:
+        201:
+          description: "User registered successfully"
+        400:
+          description: "User already exists"
+
+  /api/auth/login:
+    post:
+      summary: "User login"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  description: "User password"
+      responses:
+        200:
+          description: "Successful login, returns access & refresh tokens"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: "JWT Access Token (Expires in 15 minutes)"
+                  refreshToken:
+                    type: string
+                    description: "JWT Refresh Token (Expires in 7 days)"
+        401:
+          description: "Invalid credentials"
+
+  /api/auth/refresh-token:
+    post:
+      summary: "Generate a new access token using refresh token"
+      tags:
+        - Auth
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  description: "JWT Refresh Token stored in cookie"
+                  example: "eyJhbGciOiJIUzI1NiIsIn..."
+      responses:
+        200:
+          description: "New access token generated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: "New JWT Access Token (Expires in 15 minutes)"
+                    example: "eyJhbGciOiJIUzI1NiIsIn..."
+        403:
+          description: "Invalid or missing refresh token"
+
+  /api/auth/forgot-password:
+    post:
+      summary: "Request password reset email"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@vibe.com"
+      responses:
+        200:
+          description: "Password reset email sent"
+        400:
+          description: "Email not registered"
+
+  /api/auth/reset-password:
+    post:
+      summary: "Reset password with token"
+      tags:
+        - Auth
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resetToken
+                - newPassword
+              properties:
+                resetToken:
+                  type: string
+                  description: "Token received in email"
+                  example: "abcdef123456"
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: "New password"
+                  example: "NewPass@123"
+      responses:
+        200:
+          description: "Password reset successfully"
+        400:
+          description: "Invalid or expired token"
+          
+  /api/auth/logout:
+    post:
+      summary: "Logout and invalidate refresh token"
+      tags:
+        - Auth
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: false
+      responses:
+        200:
+          description: "User successfully logged out"
+        403:
+          description: "Refresh token missing or invalid"
+        500:
+          description: "Internal Server Error"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: "Refresh Token stored as HTTP-Only cookie"
