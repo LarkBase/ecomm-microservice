@@ -23,19 +23,55 @@ paths:
               required:
                 - email
                 - password
+                - name
               properties:
+                name:
+                  type: string
+                  description: "Full name of the user"
                 email:
                   type: string
                   format: email
+                  example: "user@vibe.com"
                 password:
                   type: string
                   minLength: 8
-                  description: "Must contain uppercase, number & special char"
+                  description: "Must contain uppercase, number & special character"
       responses:
         201:
           description: "User registered successfully"
-        400:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        409:
           description: "User already exists"
+        500:
+          description: "Internal Server Error"
+
+  /api/auth/verify-email:
+    get:
+      summary: "Verify email address"
+      tags:
+        - Auth
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+            example: "54663eb5-6256-445b-a3c9-9beee9bf822d"
+          description: "Verification token received via email"
+      responses:
+        200:
+          description: "Email verified successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        400:
+          description: "Invalid or expired token"
+        500:
+          description: "Internal Server Error"
 
   /api/auth/login:
     post:
@@ -55,25 +91,22 @@ paths:
                 email:
                   type: string
                   format: email
+                  example: "user@vibe.com"
                 password:
                   type: string
                   description: "User password"
+                  example: "SecurePass@123"
       responses:
         200:
           description: "Successful login, returns access & refresh tokens"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
-                    description: "JWT Access Token (Expires in 15 minutes)"
-                  refreshToken:
-                    type: string
-                    description: "JWT Refresh Token (Expires in 7 days)"
+                $ref: "#/components/schemas/AuthResponse"
         401:
           description: "Invalid credentials"
+        403:
+          description: "Email not verified"
 
   /api/auth/refresh-token:
     post:
@@ -82,17 +115,6 @@ paths:
         - Auth
       security:
         - cookieAuth: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                refreshToken:
-                  type: string
-                  description: "JWT Refresh Token stored in cookie"
-                  example: "eyJhbGciOiJIUzI1NiIsIn..."
       responses:
         200:
           description: "New access token generated"
@@ -104,7 +126,6 @@ paths:
                   accessToken:
                     type: string
                     description: "New JWT Access Token (Expires in 15 minutes)"
-                    example: "eyJhbGciOiJIUzI1NiIsIn..."
         403:
           description: "Invalid or missing refresh token"
 
@@ -129,7 +150,11 @@ paths:
       responses:
         200:
           description: "Password reset email sent"
-        400:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        404:
           description: "Email not registered"
 
   /api/auth/reset-password:
@@ -137,8 +162,6 @@ paths:
       summary: "Reset password with token"
       tags:
         - Auth
-      security:
-        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -161,9 +184,13 @@ paths:
       responses:
         200:
           description: "Password reset successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
         400:
           description: "Invalid or expired token"
-          
+
   /api/auth/logout:
     post:
       summary: "Logout and invalidate refresh token"
@@ -171,11 +198,13 @@ paths:
         - Auth
       security:
         - cookieAuth: []
-      requestBody:
-        required: false
       responses:
         200:
           description: "User successfully logged out"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
         403:
           description: "Refresh token missing or invalid"
         500:
@@ -188,3 +217,32 @@ components:
       in: cookie
       name: refreshToken
       description: "Refresh Token stored as HTTP-Only cookie"
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT Access Token"
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
