@@ -65,11 +65,11 @@ exports.login = async (req, res) => {
     }
 
     const accessToken = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: "15m",
+      expiresIn: JWT_EXPIRY,
     });
 
     const refreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, {
-      expiresIn: "7d",
+      expiresIn: JWT_REFRESH_EXPIRY,
     });
 
     await prisma.refreshToken.create({
