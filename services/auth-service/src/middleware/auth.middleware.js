@@ -7,18 +7,24 @@ module.exports = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      logger.warn("Unauthorized request - Missing token");
+      logger.auth.warn(`Unauthorized request from IP: ${req.ip} - Missing token`);
       return res.status(401).json({ success: false, message: "Unauthorized access. No token provided." });
     }
 
-    // Verify JWT
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    
-    logger.info(`User authenticated: ${decoded.email}`);
-    next();
+    // Verify JWT Token
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        logger.auth.warn(`Invalid token attempt from IP: ${req.ip} - ${err.message}`);
+        return res.status(401).json({ success: false, message: "Invalid or expired token. Please log in again." });
+      }
+
+      req.user = decoded; // Attach user data to request
+      logger.auth.info(`✅ User authenticated: ${decoded.email} (ID: ${decoded.userId})`);
+      next();
+    });
+
   } catch (error) {
-    logger.error("Invalid token or expired session");
-    return res.status(401).json({ success: false, message: "Invalid or expired token. Please log in again." });
+    logger.error(`Authentication Error: ${error.message}`);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };

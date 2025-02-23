@@ -7,6 +7,7 @@ module.exports = {
   JWT_EXPIRY: process.env.JWT_EXPIRY,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
   JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY,
+  APP_BASE_URL: process.env.APP_BASE_URL,
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) ,
   RATE_LIMIT: {
     windowMs: process.env.RATE_LIMIT_WINDOW_MS, 

@@ -2,7 +2,7 @@
 CREATE TYPE "RoleLevel" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER');
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION');
+CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION', 'DISABLED');
 
 -- CreateTable
 CREATE TABLE "Tenant" (
@@ -23,9 +23,10 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "email" TEXT NOT NULL,
-    "namme" TEXT NOT NULL,
+    "name" VARCHAR(100) NOT NULL DEFAULT '',
     "password" TEXT NOT NULL,
     "status" "UserStatus" NOT NULL DEFAULT 'PENDING_VERIFICATION',
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deletedAt" TIMESTAMP(3),

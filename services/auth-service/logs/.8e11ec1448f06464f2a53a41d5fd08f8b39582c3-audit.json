@@ -6,9 +6,9 @@
     "auditLog": "D:\\LARK\\GITHUB\\BinaryBeasts\\ecomm-microservice\\services\\auth-service\\logs\\.8e11ec1448f06464f2a53a41d5fd08f8b39582c3-audit.json",
     "files": [
         {
-            "date": 1740253410461,
+            "date": 1740331729566,
             "name": "D:\\LARK\\GITHUB\\BinaryBeasts\\ecomm-microservice\\services\\auth-service\\logs\\combined-2025-02-23.log",
-            "hash": "d66b2d98be6f31ac97ccccc5c782d98d4454486db4fa8bb85f7ce25033c862c9"
+            "hash": "96c221aa24d6c4c276aab5a514cecf274afbd6aff678077a8b7566091bfab139"
         }
     ],
     "hashType": "sha256"

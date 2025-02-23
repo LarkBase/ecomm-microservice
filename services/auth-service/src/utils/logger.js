@@ -5,26 +5,50 @@ const path = require("path");
 // ✅ Define log directory
 const logDir = path.join(__dirname, "../../logs");
 
-// ✅ Create a rotating file transport for error logs
-const errorTransport = new winston.transports.DailyRotateFile({
-  filename: `${logDir}/error-%DATE%.log`,
-  datePattern: "YYYY-MM-DD",
-  zippedArchive: true, // ✅ Compress old logs
-  maxSize: "50m", // ✅ 50MB per file
-  maxFiles: "14d", // ✅ Retain logs for 14 days
-  level: "error",
-});
+// ✅ Create rotating file transports
+const transports = {
+  combined: new winston.transports.DailyRotateFile({
+    filename: `${logDir}/combined-%DATE%.log`,
+    datePattern: "YYYY-MM-DD",
+    zippedArchive: true,
+    maxSize: "50m",
+    maxFiles: "14d",
+  }),
 
-// ✅ Create a rotating file transport for all logs
-const combinedTransport = new winston.transports.DailyRotateFile({
-  filename: `${logDir}/combined-%DATE%.log`,
-  datePattern: "YYYY-MM-DD",
-  zippedArchive: true,
-  maxSize: "50m",
-  maxFiles: "14d",
-});
+  error: new winston.transports.DailyRotateFile({
+    filename: `${logDir}/error-%DATE%.log`,
+    datePattern: "YYYY-MM-DD",
+    zippedArchive: true,
+    maxSize: "50m",
+    maxFiles: "14d",
+    level: "error",
+  }),
 
-// ✅ Create the Winston logger
+  auth: new winston.transports.DailyRotateFile({
+    filename: `${logDir}/auth-%DATE%.log`,
+    datePattern: "YYYY-MM-DD",
+    zippedArchive: true,
+    maxSize: "50m",
+    maxFiles: "14d",
+  }),
+
+  audit: new winston.transports.DailyRotateFile({
+    filename: `${logDir}/audit-%DATE%.log`,
+    datePattern: "YYYY-MM-DD",
+    zippedArchive: true,
+    maxSize: "50m",
+    maxFiles: "30d",
+  }),
+
+  console: new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    ),
+  }),
+};
+
+// ✅ Main Logger Instance
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
@@ -32,22 +56,23 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
-    }),
-    errorTransport,
-    combinedTransport,
+    transports.combined,
+    transports.error,
+    transports.auth, // ✅ Now Auth Logs will be written in main logs too
+    transports.audit, // ✅ Now Audit Logs will be written in main logs too
+    transports.console,
   ],
 });
 
-// ✅ Handle uncaught exceptions & rejections
+// ✅ Specific Loggers for Different Use Cases
+logger.auth = logger.child({ level: "info", defaultMeta: { category: "Auth" } });
+logger.audit = logger.child({ level: "info", defaultMeta: { category: "Audit" } });
+logger.errorLog = logger.child({ level: "error", defaultMeta: { category: "Error" } });
+
+// ✅ Handle Uncaught Exceptions & Unhandled Rejections
 logger.exceptions.handle(
   new winston.transports.File({ filename: `${logDir}/exceptions.log` })
 );
-
 logger.rejections.handle(
   new winston.transports.File({ filename: `${logDir}/rejections.log` })
 );
