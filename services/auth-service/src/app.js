@@ -14,15 +14,10 @@ const app = express();
 app.use(express.json()); // Parse JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 app.use(cookieParser());
-
-app.use(
-  cors({
-    origin: "*", // Allow all origins
-    credentials: true, // Allow cookies
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
+app.use(cors({
+    origin: "*", 
+    credentials: true, 
+  }));
 
 app.use(helmet()); // Security headers
 app.use(
@@ -47,10 +42,12 @@ app.use(limiter);
 
 // ✅ Import Routes
 const authRoutes = require("./routes/auth.routes");
+const healthRoutes = require("./routes/health.routes");
 setupSwagger(app);
 
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
+app.use("/heartbeat/health-check", healthRoutes);
 
 // ✅ 404 Handler
 app.use((req, res) => {
