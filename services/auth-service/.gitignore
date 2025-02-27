@@ -11,3 +11,5 @@ logs/**/*.log
 
 # Ignore log files (if logs are not inside a folder)
 *.log
+
+coverage/*

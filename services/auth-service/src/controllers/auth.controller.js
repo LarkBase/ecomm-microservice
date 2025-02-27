@@ -20,26 +20,26 @@ exports.register = async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    // ✅ Check if user already exists
+    // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       logger.auth.warn(`Registration failed: Email ${email} already in use.`);
       return res.status(409).json({ success: false, message: "User already exists." });
     }
 
-    // ✅ Hash password securely
+    // Hash password securely
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    // ✅ Generate verification token
+    // Generate verification token
     const verificationToken = uuidv4();
 
-    // ✅ Create user in the database with "PENDING_VERIFICATION" status
+    // Create user in the database with "PENDING_VERIFICATION" status
     const newUser = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
-        status: "PENDING_VERIFICATION", // 🔥 User must verify email before login
+        status: "PENDING_VERIFICATION",
         tenantId: "tenant-001",
         verificationToken,
       },
@@ -47,10 +47,10 @@ exports.register = async (req, res) => {
 
     logger.audit.info(`User registered with PENDING_VERIFICATION status: ${email}`);
 
-    // ✅ Generate email verification link
+    // Generate email verification link
     const verificationLink = `${APP_BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
 
-    // ✅ Send verification email
+    // Send verification email
     const emailResponse = await sendEmail(
       email,
       "Verify Your Email - E-Commerce",
@@ -73,7 +73,6 @@ exports.register = async (req, res) => {
       message: "Registration successful. Please check your email to verify your account.",
       userId: newUser.id,
     });
-
   } catch (error) {
     logger.errorLog.error(`❌ Registration error: ${error.stack}`);
     return res.status(500).json({ success: false, message: "Internal Server Error." });
@@ -125,13 +124,13 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ Validate request body
+    // Validate request body
     if (!email || !password) {
       logger.auth.warn(`⚠️ Login failed: Missing email or password.`);
       return res.status(400).json({ success: false, message: "Email and password are required." });
     }
 
-    // ✅ Check if user exists
+    // Check if user exists
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -139,30 +138,30 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    // ✅ Check if email is verified
+    // Check if email is verified
     if (user.status === "PENDING_VERIFICATION" || !user.emailVerified) {
       logger.auth.warn(`🚫 Login blocked: ${email} has not verified email.`);
       return res.status(403).json({ success: false, message: "Email not verified. Please check your inbox." });
     }
 
-    // ✅ Validate password
+    // Validate password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       logger.auth.warn(`❌ Failed login: Incorrect password for ${email}`);
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    // ✅ Generate JWT Access Token (Short-lived)
+    // Generate JWT Access Token (Short-lived)
     const accessToken = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
       expiresIn: JWT_EXPIRY, // e.g., "15m"
     });
 
-    // ✅ Generate Refresh Token (Long-lived)
+    // Generate Refresh Token (Long-lived)
     const refreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, {
       expiresIn: JWT_REFRESH_EXPIRY, // e.g., "7d"
     });
 
-    // ✅ Store Refresh Token in Database (Token Rotation Support)
+    // Store Refresh Token in Database (Token Rotation Support)
     await prisma.refreshToken.deleteMany({ where: { userId: user.id } }); // Remove old tokens
     await prisma.refreshToken.create({
       data: {
@@ -173,7 +172,7 @@ exports.login = async (req, res) => {
       },
     });
 
-    // ✅ Set Secure HTTP-only Cookie for Refresh Token
+    // Set Secure HTTP-only Cookie for Refresh Token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -183,13 +182,11 @@ exports.login = async (req, res) => {
 
     logger.auth.info(`✅ User ${user.id} logged in successfully.`);
     res.json({ success: true, accessToken, message: "Login successful" });
-
   } catch (error) {
     logger.errorLog.error(`❌ Login error: ${error.stack}`);
     res.status(500).json({ success: false, message: "Internal Server Error", details: error.message });
   }
 };
-
 
 // ✅ Refresh Access Token with Token Rotation
 exports.refreshToken = async (req, res) => {
@@ -265,7 +262,7 @@ exports.forgotPassword = async (req, res) => {
 
     logger.auth.info(`🔍 Forgot Password attempt for email: ${email}`);
 
-    // ✅ Check if user exists
+    // Check if user exists
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -273,11 +270,11 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // ✅ Generate reset token & expiration (1 hour)
+    // Generate reset token & expiration (1 hour)
     const resetToken = uuidv4();
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); 
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-    // ✅ Store reset token & expiry in DB
+    // Store reset token & expiry in DB
     await prisma.user.update({
       where: { email },
       data: { passwordResetToken: resetToken, passwordResetTokenExpiry: resetTokenExpiry },
@@ -286,7 +283,7 @@ exports.forgotPassword = async (req, res) => {
     const resetLink = `${APP_BASE_URL}/api/auth/reset-password?token=${resetToken}`;
     logger.auth.info(`🔗 Generated reset link for ${email}: ${resetLink}`);
 
-    // ✅ Send email
+    // Send email
     const emailResponse = await sendEmail(
       email,
       "Password Reset Request",
@@ -304,7 +301,6 @@ exports.forgotPassword = async (req, res) => {
 
     logger.auth.info(`✅ Password reset link sent successfully to ${email}`);
     res.json({ success: true, message: "Password reset email sent." });
-
   } catch (error) {
     logger.errorLog.error(`❌ Forgot Password Error: ${error.stack}`);
     res.status(500).json({ success: false, message: "Internal Server Error" });

@@ -52,13 +52,24 @@ app.use("/heartbeat/health-check", healthRoutes);
 // ✅ 404 Handler
 app.use((req, res) => {
   logger.warn(`404 Not Found: ${req.originalUrl}`);
-  res.status(404).json({ success: false, message: "Resource not found." });
+  res.status(404).json({
+    success: false,
+    message: "Resource not found.",
+  });
 });
 
-// ✅ Error Handling Middleware (For Unexpected Errors)
+// ✅ Centralized Error Handler
 app.use((err, req, res, next) => {
-  logger.errorLog.error(`Unexpected Error: ${err.message}`);
-  res.status(500).json({ success: false, message: "Internal Server Error" });
+  logger.errorLog.error(`❌ Unexpected Error: ${err.message}`);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === "production"
+      ? "Internal Server Error"
+      : err.message,
+    details: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
 });
+
 
 module.exports = app;

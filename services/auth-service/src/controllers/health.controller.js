@@ -15,14 +15,20 @@ exports.detailedHealthCheck = async (req, res) => {
     logger.info("🔍 Running detailed health check...");
 
     // ✅ Check Database Connection
-    await prisma.$queryRaw`SELECT 1`; // Simple DB ping query
-    const dbStatus = "Healthy";
+    logger.info("⏳ Checking Database Connection...");
+    await prisma.$queryRaw`SELECT 1`; // This should throw an error if the database is down
+    logger.info("✅ Database is Healthy");
+
+    // ✅ Check External Services (e.g., Email Service)
+    const externalServices = await checkExternalServices();
+    logger.info("✅ External Services Check Complete");
 
     const healthReport = {
       success: true,
       message: "Detailed Health Check Passed",
       server: "Healthy",
-      database: dbStatus,
+      database: "Healthy",
+      externalServices,
       timestamp: new Date().toISOString(),
     };
 
@@ -37,6 +43,15 @@ exports.detailedHealthCheck = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// ✅ Check External Services (Mocked for now)
+const checkExternalServices = async () => {
+  // Example: Check email service, cache, etc.
+  return {
+    emailService: "Healthy", // Mocked
+    cacheService: "Healthy", // Mocked
+  };
 };
 
 // ✅ Gracefully disconnect Prisma Client on process exit

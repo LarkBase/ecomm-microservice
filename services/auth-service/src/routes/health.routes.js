@@ -7,6 +7,6 @@ const router = express.Router();
 router.get("/", basicHealthCheck);
 
 // ✅ Detailed Health Check (Includes DB & Other Services)
-router.get("/details", detailedHealthCheck);
+router.get("/detailed", detailedHealthCheck);
 
 module.exports = router;
